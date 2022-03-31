@@ -324,7 +324,7 @@ Code:
 ```julia
 using FractionalDiffEq, Plots
 fun(t, u)=1-u; tspan = collect(0:0.01:20)
-prob = FODEProblem(fun, 1.8, 0, 20)
+prob = SingleTermFODEProblem(fun, 1.8, 0, 20)
 sol = solve(prob, 0.01, PECE())
 plot(tspan, sol)
 ```
@@ -404,19 +404,17 @@ $$
 
 ```julia
 using FractionalDiffEq, Plots
-function chua(t, x, k)
-    a=10.725, b=10.593, c=0.268, m0=-1.1726, m1=-0.7872
-    if k==1
-        return a*(x[2]-x[1]-m1*x[1]+0.5*(m0-m1)*(abs(x[1]+1)-abs(x[1]-1)))
-    elseif k==2
-        return x[1]-x[2]+x[3]
-    elseif k==3
-        return -b*x[2]-c*x[3]
-    end
+function chua!(du, x, p, t)
+    a = 10.725; b = 10.593; c = 0.268; m0 = -1.1726; m1 = -0.7872
+    du[1] = a*(x[2]-x[1]-(m1*x[1]+0.5*(m0-m1)*(abs(x[1]+1)-abs(x[1]-1))))
+    du[2] = x[1]-x[2]+x[3]
+    du[3] = -b*x[2]-c*x[3]
 end
-α = [0.93, 0.99, 0.92]; x0 = [0.2; -0.1; 0.1];
-h = 0.001; tn = 200;
-prob = FODESystem(chua, α, x0)
+α = [0.93, 0.99, 0.92];
+x0 = [0.2; -0.1; 0.1];
+h = 0.001;
+prob = FODESystem(chua!, α, x0)
+tn = 200;
 result = solve(prob, h, tn, NonLinearAlg())
 plot(result[:, 1], result[:, 2], title="Chua System", legend=:bottomright)
 ```
@@ -537,7 +535,7 @@ $$
 Construct problem using <kbd>FDDEProblem</kbd>.
 
 ```julia
-julia> FDDEProblem(f, ϕ, α, τ, T)
+julia> fddeprob = FDDEProblem(f, ϕ, α, τ, T)
 ```
 
 And choose a method.
@@ -686,7 +684,7 @@ layout: two-cols
 
 With the help of [ApproxFun.jl](https://github.com/JuliaApproximation/ApproxFun.jl), FractionalDiffEq.jl is able to solve fractional integral equations.
 
-Second kind Abel integral equation:
+Fractional integral equation example:
 
 $$
 u(x)+I^{
